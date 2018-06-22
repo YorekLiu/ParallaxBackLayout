@@ -4,13 +4,13 @@ import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Build;
 import android.support.annotation.IntDef;
 import android.support.v4.view.ViewCompat;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -111,6 +111,10 @@ public class ParallaxBackLayout extends FrameLayout {
 //    private Bitmap mSecondBitmap;
 //    private Paint mPaintCache;
 
+    // Yorek Liu modified at 2018/6/22 start
+    private int maxAlpha = 128;
+    // Yorek Liu modified at 2018/6/22 end
+
 
     private boolean mInLayout;
 
@@ -180,7 +184,9 @@ public class ParallaxBackLayout extends FrameLayout {
         if (mContentView != null) {
             int cleft = mContentLeft;
             int ctop = mContentTop;
-            Log.d(View.VIEW_LOG_TAG, "left = " + left + " top = " + top);
+            // Yorek Liu modified at 2018/6/22 start
+            // Log.d(View.VIEW_LOG_TAG, "left = " + left + " top = " + top);
+            // Yorek Liu modified at 2018/6/22 end
             ViewGroup.LayoutParams params = mContentView.getLayoutParams();
             if (params instanceof MarginLayoutParams) {
                 cleft += ((MarginLayoutParams) params).leftMargin;
@@ -209,7 +215,9 @@ public class ParallaxBackLayout extends FrameLayout {
 
     @Override
     protected boolean drawChild(Canvas canvas, View child, long drawingTime) {
-        Log.d(VIEW_LOG_TAG, "drawChild");
+        // Yorek Liu modified at 2018/6/22 start
+        // Log.d(VIEW_LOG_TAG, "drawChild");
+        // Yorek Liu modified at 2018/6/22 end
         final boolean drawContent = child == mContentView;
         if (mEnable)
             drawThumb(canvas, child);
@@ -223,6 +231,16 @@ public class ParallaxBackLayout extends FrameLayout {
     //endregion
 
     //region private method
+
+    // Yorek Liu modified at 2018/6/22 end
+    /**
+     * 0~255
+     * @param maxAlpha 最大透明度
+     */
+    public void setMaxAlpha(int maxAlpha) {
+        this.maxAlpha = maxAlpha;
+    }
+    // Yorek Liu modified at 2018/6/22 start
 
     /**
      * Set up contentView which will be moved by user gesture
@@ -270,24 +288,39 @@ public class ParallaxBackLayout extends FrameLayout {
             return;
         if(mShadowLeft == null)
             return;
+        // Yorek Liu modified at 2018/6/22 start
+//        if (mEdgeFlag == EDGE_LEFT) {
+//            mShadowLeft.setBounds(child.getLeft() - mShadowLeft.getIntrinsicWidth(), child.getTop(),
+//                    child.getLeft(), child.getBottom());
+//            mShadowLeft.setAlpha((getWidth()-child.getLeft())*255/getWidth());
+//        } else if (mEdgeFlag == EDGE_RIGHT) {
+//            mShadowLeft.setBounds(child.getRight(), child.getTop(),
+//                    child.getRight() + mShadowLeft.getIntrinsicWidth(), child.getBottom());
+//            mShadowLeft.setAlpha(child.getRight()*255/getWidth());
+//        } else if (mEdgeFlag == EDGE_BOTTOM) {
+//            mShadowLeft.setBounds(child.getLeft(), child.getBottom(),
+//                    child.getRight(), child.getBottom() + mShadowLeft.getIntrinsicHeight());
+//
+//            mShadowLeft.setAlpha(child.getBottom()*255/getHeight());
+//        } else if (mEdgeFlag == EDGE_TOP) {
+//            mShadowLeft.setBounds(child.getLeft(), child.getTop() - mShadowLeft.getIntrinsicHeight() + getSystemTop(),
+//                    child.getRight(), child.getTop() + getSystemTop());
+//            mShadowLeft.setAlpha((getHeight()-child.getTop())*255/getHeight());
+//        }
         if (mEdgeFlag == EDGE_LEFT) {
-            mShadowLeft.setBounds(child.getLeft() - mShadowLeft.getIntrinsicWidth(), child.getTop(),
-                    child.getLeft(), child.getBottom());
-            mShadowLeft.setAlpha((getWidth()-child.getLeft())*255/getWidth());
+            mShadowLeft.setBounds(0, child.getTop(), child.getLeft(), child.getBottom());
+            mShadowLeft.setAlpha((getWidth() - child.getLeft()) * maxAlpha / getWidth());
         } else if (mEdgeFlag == EDGE_RIGHT) {
-            mShadowLeft.setBounds(child.getRight(), child.getTop(),
-                    child.getRight() + mShadowLeft.getIntrinsicWidth(), child.getBottom());
-            mShadowLeft.setAlpha(child.getRight()*255/getWidth());
+            mShadowLeft.setBounds(child.getRight(), child.getTop(), getWidth(), child.getBottom());
+            mShadowLeft.setAlpha(child.getRight() * maxAlpha / getWidth());
         } else if (mEdgeFlag == EDGE_BOTTOM) {
-            mShadowLeft.setBounds(child.getLeft(), child.getBottom(),
-                    child.getRight(), child.getBottom() + mShadowLeft.getIntrinsicHeight());
-
-            mShadowLeft.setAlpha(child.getBottom()*255/getHeight());
+            mShadowLeft.setBounds(child.getLeft(), child.getBottom(), child.getRight(), getHeight());
+            mShadowLeft.setAlpha(child.getBottom() * maxAlpha / getHeight());
         } else if (mEdgeFlag == EDGE_TOP) {
-            mShadowLeft.setBounds(child.getLeft(), child.getTop() - mShadowLeft.getIntrinsicHeight() + getSystemTop(),
-                    child.getRight(), child.getTop() + getSystemTop());
-            mShadowLeft.setAlpha((getHeight()-child.getTop())*255/getHeight());
+            mShadowLeft.setBounds(child.getLeft(), 0, child.getRight(), child.getTop() + getSystemTop());
+            mShadowLeft.setAlpha((getHeight() - child.getTop()) * maxAlpha / getHeight());
         }
+        // Yorek Liu modified at 2018/6/22 end
         mShadowLeft.draw(canvas);
     }
 
@@ -428,27 +461,34 @@ public class ParallaxBackLayout extends FrameLayout {
             return;
         mEdgeFlag = edgeFlag;
         mDragHelper.setEdgeTrackingEnabled(edgeFlag);
-        GradientDrawable.Orientation orientation = GradientDrawable.Orientation.LEFT_RIGHT;
-        if (edgeFlag == EDGE_LEFT)
-            orientation = GradientDrawable.Orientation.RIGHT_LEFT;
-        else if (edgeFlag == EDGE_TOP) {
-            orientation = GradientDrawable.Orientation.BOTTOM_TOP;
-        } else if (edgeFlag == EDGE_RIGHT)
-            orientation = GradientDrawable.Orientation.LEFT_RIGHT;
-        else if (edgeFlag == EDGE_BOTTOM)
-            orientation = GradientDrawable.Orientation.TOP_BOTTOM;
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN) {
-            mShadowLeft = null;
-        }
+        // Yorek Liu modified at 2018/6/22 start
+//        GradientDrawable.Orientation orientation = GradientDrawable.Orientation.LEFT_RIGHT;
+//        if (edgeFlag == EDGE_LEFT)
+//            orientation = GradientDrawable.Orientation.RIGHT_LEFT;
+//        else if (edgeFlag == EDGE_TOP) {
+//            orientation = GradientDrawable.Orientation.BOTTOM_TOP;
+//        } else if (edgeFlag == EDGE_RIGHT)
+//            orientation = GradientDrawable.Orientation.LEFT_RIGHT;
+//        else if (edgeFlag == EDGE_BOTTOM)
+//            orientation = GradientDrawable.Orientation.TOP_BOTTOM;
+//        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN) {
+//            mShadowLeft = null;
+//        }
+//        if (mShadowLeft == null) {
+//            int colors[] = {0x66000000, 0x11000000, 0x00000000};
+//            ShadowDrawable drawable = new ShadowDrawable(orientation, colors);
+//            drawable.setGradientRadius(90);
+//            drawable.setSize(50, 50);
+//            mShadowLeft = drawable;
+//        } else if (mShadowLeft instanceof ShadowDrawable) {
+//            ((ShadowDrawable) mShadowLeft).setOrientation(orientation);
+//        }
         if (mShadowLeft == null) {
-            int colors[] = {0x66000000, 0x11000000, 0x00000000};
-            ShadowDrawable drawable = new ShadowDrawable(orientation, colors);
-            drawable.setGradientRadius(90);
-            drawable.setSize(50, 50);
+            GradientDrawable drawable = new GradientDrawable();
+            drawable.setColor(Color.BLACK);
             mShadowLeft = drawable;
-        } else if (mShadowLeft instanceof ShadowDrawable) {
-            ((ShadowDrawable) mShadowLeft).setOrientation(orientation);
         }
+        // Yorek Liu modified at 2018/6/22 end
         applyWindowInset();
     }
 
