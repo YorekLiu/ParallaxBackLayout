@@ -1,3 +1,8 @@
+本repo fork出来只是修改了滑动返回的阴影效果。修改后的效果为底下的Fragment盖上了透明的灰色，而不是固定的阴影跟随滑动。 
+这些修改也没有重新build并上传到maven。若有需要上述效果，请自行进行源码依赖。  
+
+以下为原repo的README
+
 # ParallaxBackLayout
 [![Download](https://api.bintray.com/packages/anzewei/maven/com.github.anzewei/images/download.svg)](https://bintray.com/anzewei/maven/com.github.anzewei/_latestVersion)
 
